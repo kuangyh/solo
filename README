@@ -1,0 +1,4 @@
+Solo is a Python library for data handling
+  1. Function programming: function combine (pipe), pattern matching
+  2. Standard data model (RDF-based) and LINQ-like data quering
+  3. Data templating for data convertion
