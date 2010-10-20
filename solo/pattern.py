@@ -83,7 +83,7 @@ Pattern.operator('check', Check)
 
 class Guard(object):
     def __init__(self, *funcs):
-        self.func = funcs
+        self.func = map(util.maketest, funcs)
 
     def __call__(self, value):
         c = ctx.curr()
@@ -210,15 +210,14 @@ class RegexExtractor(object):
 Pattern.operator('re', RegexExtractor)
 
 def compile_extractor(src):
-    if isinstance(src, type) and hasattr(src, '__extractor__'):
-        return Pattern((Type(src), src.__extractor__)) # check type, then use default extractor
-    elif callable(src):
+    if callable(src):
         return src              # invoke that function
     elif isinstance(src, (list, tuple)):
         return MappingExtractor(*src)
     else:
         return KeyExtractor(src)
 Pattern.operator('__getitem__', compile_extractor)
+Pattern.operator('__getslice__', lambda i, j: compile_extractor(slice(i, j)))
 
 P = Pattern()
 

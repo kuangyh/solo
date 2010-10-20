@@ -64,6 +64,7 @@ class Limit(Hook):
         it = util.makeiter(value)
         return itertools.islice(it, self.start, self.stop, self.step)
 DSet.operator('limit', Limit)
+DSet.operator('__getslice__', Limit)
 
 
 def _makeselect(*keys, **defaults):
@@ -131,3 +132,11 @@ class XPath(Hook):
             output.extend(node.xpath(self.path))
         return output
 DSet.operator('xml', XPath)
+
+SET = DSet()
+
+if __name__ == '__main__':
+    from pattern import P
+
+    v = SET.map(lambda x: x * 2)[:2]
+    print list(v([1,2,3]))
