@@ -6,6 +6,7 @@ Scala-like pattern matching with object-oriented support (extract from complex o
 
 import ctx
 import pipe
+import util
 
 class NotMatchException(Exception): pass
 
@@ -71,7 +72,7 @@ Pattern.operator('type', Type)
 
 class Check(object):
     def __init__(self, *funcs):
-        self.funcs = funcs
+        self.funcs = map(util.maketest, funcs)
 
     def __call__(self, value):
         for func in self.funcs:
@@ -177,6 +178,21 @@ class ObjectExtractor(object):
 Pattern.operator('attrs', ObjectExtractor)
 Pattern.operator('a', ObjectExtractor)
 
+class KeyExtractor(object):
+    NODEFAULT = object()
+    def __init__(self, key, default = NODEFAULT):
+        self.key = key
+        self.default = default
+
+    def __call__(self, value):
+        try:
+            return value[self.key]
+        except BaseException, e:
+            if self.default != KeyExtractor.NODEFAULT:
+                return self.default
+            else:
+                raise
+
 import re
 class RegexExtractor(object):
     def __init__(self, pat):
@@ -198,13 +214,11 @@ def compile_extractor(src):
         return Pattern((Type(src), src.__extractor__)) # check type, then use default extractor
     elif callable(src):
         return src              # invoke that function
-    elif isinstance(src, basestring):
-        return RegexExtractor(src) # regex matching and extracting
     elif isinstance(src, (list, tuple)):
         return MappingExtractor(*src)
     else:
-        # Perform a normal match
-        return compile_match(src)
+        return KeyExtractor(src)
 Pattern.operator('__getitem__', compile_extractor)
 
 P = Pattern()
+
