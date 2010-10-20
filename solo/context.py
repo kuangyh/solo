@@ -58,4 +58,4 @@ class Context(dict):
         self.__prev = None
 
 curr = Context.curr
-
+ctx = Context

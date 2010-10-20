@@ -29,11 +29,11 @@ class Pipe(tuple):
         chain_factory.__name__ = name
         setattr(cls, name, chain_factory)
 
-def pipe(*funcs):
-    """
-    Covinient function to create pipe, pipe(a, b, c) etc.
-    """
+PIPE = Pipe()
+
+def combine(*funcs):
     return Pipe(funcs)
+        
 
 class Try(tuple):
     """

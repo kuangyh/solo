@@ -207,3 +207,4 @@ def compile_extractor(src):
         return compile_match(src)
 Pattern.operator('__getitem__', compile_extractor)
 
+P = Pattern()
