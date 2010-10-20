@@ -15,6 +15,7 @@ ctx => { 'a' : 10 }
 """
 
 import threading
+import types
 
 class Context(dict):
     __thstat__ = threading.local()
@@ -59,3 +60,41 @@ class Context(dict):
 
 curr = Context.curr
 ctx = Context
+
+class ContextFunction(object):
+    """
+    Wrap a function, make it collect arguments from a mapping instead of argument list
+
+    func = ContextFunction(lambda x, y = 10: x + y)
+    func({'x' : 20}) => 30
+    func({'x' : 20, 'y' : 22}) => 42
+    """
+    def __init__(self, orig):
+        self.orig = orig
+        func = orig
+        if not hasattr(func, '__code__'):
+            func = func.__call__
+        if isinstance(func, types.MethodType):
+            func = func.im_func
+            func_args = func.__code__.co_varnames[1 : func.__code__.co_argcount]
+        else:
+            func_args = func.__code__.co_varnames[:func.__code__.co_argcount]
+
+        num_defaults = len(func.func_defaults or ())
+        if num_defaults > 0:
+            self.required_args = func_args[:-num_defaults]
+            self.optional_args = func_args[-num_defaults:]
+        else:
+            self.required_args = func_args
+            self.optional_args = ()
+
+    def __call__(self, ctx):
+        args = map(ctx.__getitem__, self.required_args)
+        kwargs = {}
+        for name in self.optional_args:
+            if name in ctx:
+                kwargs[name] = ctx[name]
+        return self.orig(*args, **kwargs)
+
+ctxfun = ContextFunction
+

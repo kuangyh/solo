@@ -10,14 +10,23 @@ import context
 
 class _Template(object):
     @staticmethod
-    def isop(src):
-        return callable(src)
+    def asop(src):
+        if callable(src):
+            return src
+        raise TypeError, src
 
     @staticmethod
     def compile(src):
-        if _Template.isop(src):
-            return src
-        elif isinstance(src, (list, dict)):
+        ctx = context.curr()
+        if ctx is not None:
+            asop = ctx.get('conf/asop', _Template.asop)
+        else:
+            asop = _Template.asop
+        try:
+            return asop(src)
+        except BaseException, e:
+            pass        
+        if isinstance(src, (list, dict)):
             return CollTemplate(src)
         else:
             return ConstTemplate(src)
