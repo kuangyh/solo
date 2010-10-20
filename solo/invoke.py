@@ -3,14 +3,15 @@
 """
 Somewhat hard to explain
 """
-import context
+import ctx
+import tpl
 
 class Invoke(object):
     def __asop(src):
         if isinstance(src, Invoke):
             return ~src
         raise TypeError, src
-    __conf_ctx = context.Context({'conf/asop' : __asop})
+    __conf_ctx = ctx.Context({'conf/asop' : __asop})
     
     def __init__(self, codesrc, params):
         self.__codesrc = codesrc
@@ -25,18 +26,17 @@ class Invoke(object):
 
     @staticmethod
     def _compile_param(idx, param):
-        import datatpl
 
         # For simple data type, directly exit it
         if type(param) in (int, float, basestring, bool):
             return repr(param), ()
 
         with Invoke.__conf_ctx:
-            tpl = datatpl.TPL(param)
-        if isinstance(tpl, datatpl.ConstTemplate):
+            t = tpl.TPL(param)
+        if isinstance(t, tpl.ConstTemplate):
             return 'p[%d]' % (idx,), (param,)
         else:
-            return '(p[%d](_))' % (idx,), (tpl,)
+            return '(p[%d](_))' % (idx,), (t,)
 
     def __extend(self, codesrc, params = ()):
         return type(self)(self.__codesrc + codesrc, self.__params + params)
@@ -57,8 +57,7 @@ class Invoke(object):
 
 IN = Invoke('_', ())
 IG = Invoke('globals()', ())
-import context
-IC = Invoke('p[0]()', (context.curr,))
+IC = Invoke('p[0]()', (ctx.curr,))
 
 def I(start):
     return Invoke('p[0]', (start,))

@@ -4,14 +4,14 @@
 Scala-like pattern matching with object-oriented support (extract from complex objects)
 """
 
-import context
+import ctx
 import pipe
 
 class NotMatchException(Exception): pass
 
 class Pattern(pipe.Pipe):
     def orelse(self, other):
-        return Pattern((context.tryall(self, other),))
+        return Pattern((pipe.tryall(self, other),))
     __or__ = orelse
 
     def default(self, value):
@@ -40,7 +40,7 @@ class Bind(object):
         self.name = name
 
     def __call__(self, value):
-        context.curr()[self.name] = value
+        ctx.curr()[self.name] = value
         return value
 Pattern.operator('bind', Bind)
 Pattern.operator('__mod__', Bind)
@@ -85,9 +85,9 @@ class Guard(object):
         self.func = funcs
 
     def __call__(self, value):
-        ctx = context.curr()
+        c = ctx.curr()
         for func in self.funcs:
-            if not func(ctx):
+            if not func(c):
                 raise NotMatchException(self, value)
         return value
     
@@ -186,10 +186,10 @@ class RegexExtractor(object):
         m = self.regex.match(value)
         if m is None:
             raise NotMatchException(self, value)
-        ctx = context.curr()
-        if ctx is not None:
+        c = ctx.curr()
+        if c is not None:
             for key, value in m.groupdict().iteritems():
-                ctx[key] = value
+                c[key] = value
         return m.groups()
 Pattern.operator('re', RegexExtractor)
 

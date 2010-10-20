@@ -6,7 +6,7 @@ Nothing to do with HTML etc.
 Think about XLST that transform RSS to ATOM
 """
 import util
-import context
+import ctx
 
 class _Template(object):
     @staticmethod
@@ -17,9 +17,9 @@ class _Template(object):
 
     @staticmethod
     def compile(src):
-        ctx = context.curr()
-        if ctx is not None:
-            asop = ctx.get('conf/asop', _Template.asop)
+        c = ctx.curr()
+        if c is not None:
+            asop = c.get('conf/asop', _Template.asop)
         else:
             asop = _Template.asop
         try:

@@ -2,9 +2,9 @@
 
 from pipe import PIPE, combine, tryall
 from pattern import P
-import context as ctx
+from invoke import IN, IC, IG, I
 
+import ctx
 import util
-from util import IN, IC
-import datatpl as tpl
+import tpl
 
