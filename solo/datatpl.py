@@ -124,18 +124,3 @@ MATCH = MatchTemplate
 CONST = ConstTemplate
 TPL = Template
 
-import dset
-D = dset.DSet()
-import pattern
-P = pattern.Pattern()
-
-from util import IN, IC
-
-if __name__ == '__main__':
-    v = FOR(D.groupby(0).order(0),
-            { 'name' : ~IN[0][0],
-              'value' : (D + FOR(~IN[1], ~IN[1])).order(lambda x: x, reverse = True) })
-    
-    print v([['a', 1], ['b', 2], ['a', 3], ['c', 4], ['b', 5]])
-
-    
