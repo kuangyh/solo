@@ -7,3 +7,6 @@ class Const(object):
     def __call__(self, any):
         return self.value
 
+class Var(object):
+    def __init__(self, name):
+        self.name = name

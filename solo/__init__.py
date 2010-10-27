@@ -12,7 +12,7 @@ import context
 makectx = context.ctx
 currctx = context.curr
 
-from util import Const
+from util import Const, Var
 
 
 class Magic(object):
@@ -20,7 +20,7 @@ class Magic(object):
     Give query more magics
     """
     def __getattr__(self, name):
-        return pattern.Bind(name)
+        return Var(name)
 
     def __getitem__(self, value):
         return Q + Const(value)
@@ -29,8 +29,6 @@ class Magic(object):
         return lambda value: func(value, *args, **kwargs)
     
 I = Magic()
-# Getting context
-IC = Q + (lambda x: context.curr())
 
 query.Query.__div__ = lambda self, pat: self + pattern.match(pat)
 query.Query.__and__ = lambda self, pats: self + pattern.All(*pats)

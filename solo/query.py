@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import pipe
+import context
 import util
 
 class QueryRunner(object):
-    def __init__(self, query, compiled, codesrc):
+    def __init__(self, query, compiled, codesrc, ns):
         self.query = query
         self.__compiled = compiled 
         self.codesrc = codesrc
+        self.ns = ns
 
     def __call__(self, src, ctx = None):
         if ctx is None:
@@ -47,7 +49,7 @@ class Query(object):
                 return other
             elif isinstance(other, QueryRunner):
                 return ~other
-            elif isinstance(other, Macro) or callable(other):
+            elif isinstance(other, (util.Var, util.Const, Macro)) or callable(other):
                 return type(self)((other,))
             else:
                 return type(self)((DataMacro(other),))
@@ -57,29 +59,43 @@ class Query(object):
             elif isinstance(other, Macro) or callable(other):
                 return type(self)(self.procs + (other,))
             else:
-                return type(self)(self.procs + ~(type(self)((DataMacro(other),))))
+                runner = ~(type(self)((DataMacro(other),)))
+                return type(self)(self.procs + (runner,))
 
     def __compile(self):
         # Special cases, return shortcut callable
         if len(self.procs) == 0:
-            return pipe.PIPE, ''
-        if len(self.procs) == 1 and not isinstance(self.procs[0], Macro):
-            return self.procs[0], ''
+            return pipe.PIPE, '', {}
+        if len(self.procs) == 1 and not isinstance(self.procs[0], (Macro, util.Const, util.Var)):
+            return self.procs[0], '', {}
 
+        codes = ['def _F(_):']
+        has_ctx = False
         base, params = '_', ()
         for node in self.procs:
             if isinstance(node, Macro):
                 base, params = node.gencode(base, params)
+            elif isinstance(node, util.Const):
+                base = 'p%d' % (len(params),)
+                params = params + (node.value,)
+            elif isinstance(node, util.Var):
+                if not has_ctx:
+                    codes.insert(1, '  ctx = _getctx()')
+                    has_ctx = True
+                base = 'ctx[%s]' % (repr(node.name),)
             else:
-                base = 'p%d(%s)' % (len(params), base)
+                codes.append('  _=p%d(%s)' % (len(params), base))
                 params = params + (node,)
+                base = '_'
+        codes.append('  return %s' % (base,))
         # prepare namespace
-        ns = {}
+        ns = {'_getctx' : context.curr }
         for idx in xrange(len(params)):
             ns['p%d' % (idx,)] = params[idx]
 
-        codesrc = 'lambda _:' + base
-        return eval(codesrc, ns), base
+        codesrc = '\n'.join(codes)
+        exec codesrc in ns
+        return ns['_F'], codesrc, ns
 
     def __invert__(self):
         return QueryRunner(self, *self.__compile())
@@ -91,6 +107,9 @@ class Macro(object):
             return repr(value), params, False
         elif isinstance(value, Query):
             return 'p%d(_)' % (len(params),), params + (~value,), True
+        elif isinstance(value, (util.Const, util.Var)):
+            value = ~Query((value,))
+            return 'p%d(_)' % (len(params),), params + (value,), True
         elif type(value) in (tuple, list):
             orig_params = params
             has_query = False
@@ -162,6 +181,4 @@ class CallMacro(Macro):
 Q = Query()
 
 if __name__ == '__main__':
-    v = ~(Q + [1,2,[4,[6,5]],3,[4,Q]])
-    print v.codesrc
-    print v({'delim' : ':', 'value' : 'Pudding'})
+    pass

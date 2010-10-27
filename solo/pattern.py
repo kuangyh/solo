@@ -6,6 +6,7 @@ Pattern matching processors for query
 
 import query
 import context
+import util
 
 class NotMatchException(Exception): pass
 
@@ -135,6 +136,10 @@ def match(pattern):
         return Test(~pattern)
     elif isinstance(pattern, type):
         return Type(pattern)
+    elif isinstance(pattern, util.Var):
+        return Bind(pattern.name)     # Perform Bind in pattern matching instead of Get
+    elif isinstance(pattern, util.Const):
+        return Value(pattern.value)
     elif callable(pattern):
         return Test(pattern)
     elif isinstance(pattern, (list, tuple)):
@@ -189,7 +194,4 @@ def makeiter(src):
 
 
 if __name__ == '__main__':
-    Q = query.Q
-
-    q = ~(Q['delim'].join(Q['data']))
-    print q({'delim' : ':', 'data' : ['a','b','c']})
+    pass
