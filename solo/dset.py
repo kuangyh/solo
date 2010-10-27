@@ -7,7 +7,6 @@ Iterator based batch handling
 import itertools
 import query
 import pattern
-import util
 
 class MethodSwitch(object):
     ROUTE	= ()
@@ -34,7 +33,7 @@ class Map(MethodSwitch):
         self.op_call = ~self.op
 
     def perform(self, value):
-        return map(self.op_call, util.makeiter(value))
+        return map(self.op_call, pattern.makeiter(value))
 
 class Filter(MethodSwitch):
     ROUTE	= ('filter',)    
@@ -51,5 +50,5 @@ class Filter(MethodSwitch):
                 return True
             except BaseException, e:
                 return False
-        return filter(dotest, util.makeiter(value))
+        return filter(dotest, pattern.makeiter(value))
 

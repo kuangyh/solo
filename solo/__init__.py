@@ -4,6 +4,7 @@ import query
 from query import Q
 
 import pattern
+from pattern import NIL
 import dset
 import extract
 import context

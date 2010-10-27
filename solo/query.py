@@ -15,7 +15,7 @@ class QueryRunner(object):
             with ctx:
                 return self.__compiled(src)
 
-    def __lshift__(self, src):
+    def test(self, src):
         try:
             self(src)
             return True

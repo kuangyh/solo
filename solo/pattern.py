@@ -88,14 +88,8 @@ class Choice(object):
 ##############################
 # Match data-struct
 ##############################
-class SeqMatch(object):
-    def __init__(self, match, rest):
-        self.match = match
-        self.rest = rest
 
-    def __iter__(self):
-        return self.rest
-    
+class SeqMatch(list): pass
         
 class Seq(object):
     def __init__(self, matches):
@@ -104,11 +98,26 @@ class Seq(object):
         self.matches_invoke = map(lambda x: ~x, self.matches)
 
     def __call__(self, src):
-        it = iter(src)
-        output = []
+        it = makeiter(src)
+        output = SeqMatch()
         for match in self.matches_invoke:
             output.append(match(it.next()))
-        return SeqMatch(output, it)
+        output.match_rest = it
+        return output
+
+class Tuple(object):
+    def __init__(self, matches):
+        # Make all Query
+        self.matches = matches
+        self.matches_invoke = map(lambda x: ~x, self.matches)
+
+    def __call__(self, src):
+        src = list(makeiter(src))
+        if len(src) != len(self.matches):
+            raise NotMatchException(self, src)
+        return tuple(map(lambda idx: self.matches_invoke[idx](src[idx]),
+                         xrange(len(self.matches))))
+NIL = Tuple([])
 
 class Mapping(object):
     def __init__(self, matches):
@@ -137,7 +146,10 @@ def match(pattern):
             has_test = has_test or (not isinstance(compiled, Value))
         if has_test:
             output = map(query.Q.__add__, output)
-            return Seq(output)
+            if isinstance(pattern, tuple):
+                return Tuple(output)
+            else:
+                return Seq(output)
         else:
             return Value(pattern)
     elif isinstance(pattern, dict):
@@ -160,6 +172,21 @@ def makepat(value):
         return value
     else:
         return query.Q + match(value)
+
+def makeiter(src):
+    """
+    Only consier list and iterator (with __iter__ and next) iterable
+    for other value, turn it to a iterator with only one item
+    """
+    if hasattr(src, '__iter__') and hasattr(src, 'next'):
+        return src
+    elif isinstance(src, SeqMatch):
+        return src.match_rest
+    elif isinstance(src, list):
+        return iter(src)
+    else:
+        return iter([src])
+
 
 if __name__ == '__main__':
     Q = query.Q

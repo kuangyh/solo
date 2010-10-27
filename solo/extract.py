@@ -6,7 +6,6 @@ Extract value(s) from object
 
 import re
 import pattern
-import context
 
 class Regex(object):
     def __init__(self, regex):
@@ -16,11 +15,7 @@ class Regex(object):
         m = self.regex.match(value)
         if m is None:
             raise pattern.NotMatchException(self, value)
-        c = context.curr()
-        if c is not None:
-            for key, value in m.groupdict().iteritems():
-                c[key] = value
-        return m.groups()
+        return (m.groups(), m.groupdict())
 
 R = Regex
 
